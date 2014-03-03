@@ -119,9 +119,57 @@ object TestMan extends PerformanceTest {
       }
     }
   }
+  performance of "TypeParams" in {
+    measure method "caseClassTransfer" in {
+      {
+        {
+          using(ranges) curve ("ManifestTrImplVal") in { r =>
+            for (i <- r) {
+              val a = AManifest[Int => String](i)
+              implicit val tp = a.tp
+              // AManifest[(Int, String)](i)
+              AManifest[Int => String](i)
+            }
+          }
+        }
+        {
+          using(ranges) curve ("ManifestTrNothing") in { r =>
+            for (i <- r) {
+              val a = AManifest[Int => String](i)
+              // implicit val tp = a.tp
+              // AManifest[(Int, String)](i)
+              AManifest[Int => String](i)
+            }
+          }
+        }
+        {
+          using(ranges) curve ("ManifestTrManDefInvoke") in { r =>
+            for (i <- r) {
+              val a = AManifest[Int => String](i)
+              implicit val tp = a.tp
+              // AManifest[(Int, String)](i)
+              AManifest[Int => String](i)(manifest[Int => String])
+            }
+          }
+        }
+        {
+          using(ranges) curve ("ManifestTrDefDef") in { r =>
+            for (i <- r) {
+              def recreate[T: Manifest](v: AManifest[T]): AManifest[T] = 
+                AManifest(v.i)
+              val a = AManifest[Int => String](i)
+              recreate(a)
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-case class AManifest[T: Manifest](i: Int)
+case class AManifest[T: Manifest](i: Int) {
+  val tp = implicitly[Manifest[T]]
+}
 case class ATypeTag[T: TypeTag](i: Int)
 case class ASimple(i: Int)
 case class ATP[T: TP](i: Int)
